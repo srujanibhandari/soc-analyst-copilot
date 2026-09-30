@@ -1,5 +1,5 @@
 import json
-from database.db import get_connection
+from app.database.db import get_connection
 
 def save_alerts(alerts):
     with get_connection() as connection:

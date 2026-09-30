@@ -1,5 +1,5 @@
 import pandas as pd
-from database.db import get_connection
+from app.database.db import get_connection
 
 def save_events(logs):
     with get_connection() as connection:

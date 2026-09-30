@@ -1,6 +1,6 @@
 from typing import List
 
-from models.alert import Alert
+from app.models.alert import Alert
 
 
 class AlertManager:
