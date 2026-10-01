@@ -1,7 +1,4 @@
-import pandas as pd
-
-
-def detect_bruteforce(logs):
+def detect_bruteforce(logs, threshold=3, window_seconds=120):
     alerts = []
 
     failed_logs = logs[
@@ -11,7 +8,9 @@ def detect_bruteforce(logs):
 
     failed_logs = failed_logs.sort_values("timestamp")
 
-    for ip, group in failed_logs.groupby("ip"):
+    # Analyze each user + IP combination separately
+    for (user, ip), group in failed_logs.groupby(["user", "ip"]):
+
         timestamps = group["timestamp"].tolist()
 
         for i in range(len(timestamps)):
@@ -22,18 +21,32 @@ def detect_bruteforce(logs):
                     timestamps[j] - timestamps[i]
                 ).total_seconds()
 
-                if time_difference <= 120:
+                if time_difference <= window_seconds:
                     count += 1
                 else:
                     break
 
-            if count >= 3:
+            if count >= threshold:
+                first_seen = timestamps[i]
+                last_seen = timestamps[i + count - 1]
+
                 alerts.append({
-                    "type": "brute_force",
-                    "ip": ip,
-                    "failed_attempts": count,
-                    "severity": "high"
-                })
+    "type": "brute_force",
+    "user": user,
+    "ip": ip,
+    "failed_attempts": count,
+    "first_seen": first_seen.isoformat(),
+    "last_seen": last_seen.isoformat(),
+    "window_seconds": window_seconds,
+    "severity": "high",
+    "evidence": [
+        f"{count} failed login attempts",
+        f"source IP: {ip}",
+        f"user: {user}",
+        f"activity occurred within {window_seconds} seconds"
+    ]
+})
+
                 break
 
     return alerts
